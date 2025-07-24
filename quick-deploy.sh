@@ -7,6 +7,22 @@ set -euo pipefail
 echo "PhotoPrism Quick Deployment for Heritage Orient"
 echo "=============================================="
 echo ""
+
+# CRITICAL SAFETY CHECK - Must be on London server
+CURRENT_HOST=$(hostname)
+if [[ ! "$CURRENT_HOST" =~ london|London ]]; then
+    echo "ERROR: This script must ONLY run on the London server!"
+    echo "Current host: $CURRENT_HOST"
+    echo ""
+    echo "To deploy, SSH to London server first:"
+    echo "  ssh admin@london.heritageorient.com"
+    echo ""
+    echo "DO NOT RUN PHOTOPRISM ON YOUR LAPTOP!"
+    exit 1
+fi
+
+echo "✓ Running on London server: $CURRENT_HOST"
+echo ""
 echo "This script will:"
 echo "1. Setup Pearl NAS mounts (192.168.100.212)"
 echo "2. Install and configure PhotoPrism"
