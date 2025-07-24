@@ -1,0 +1,96 @@
+# PhotoPrism configuration for NAS-based JPG indexing
+# This configuration is optimized for read-only access to Pearl NAS
+
+# Authentication
+AuthMode: password
+AdminUser: admin
+AdminPassword: ${PHOTOPRISM_ADMIN_PASSWORD}
+
+# Site configuration
+SiteUrl: "https://photos.heritageorient.com/"
+SiteTitle: "Heritage Orient Photos"
+SiteCaption: "Pearl NAS Photo Gallery"
+SiteDescription: "Browse photos from Orico and G Drive"
+SiteAuthor: "Heritage Orient"
+
+# Features - optimized for read-only NAS access
+Public: false
+ReadOnly: true                    # Prevent any modifications to original files
+Experimental: false
+DisableSettings: false
+DisableWebDAV: true               # No upload/modifications via WebDAV
+DisableBackups: true              # No need for backups in read-only mode
+DisablePlaces: false              # Keep geolocation features
+DisableExifTool: false            # Keep EXIF reading
+DisableTensorFlow: false          # Keep AI features for face/object detection
+DisableFaces: false               # Keep face recognition
+DisableClassification: false      # Keep automatic categorization
+DisableFFmpeg: true               # Disable video conversion (JPG only)
+DisableRaw: true                  # Disable RAW processing (JPG only)
+
+# Indexing configuration
+IndexWorkers: 4                   # Parallel indexing workers
+IndexSchedule: "0 3 * * *"       # Daily index at 3 AM
+AutoIndex: 300                    # Auto-index every 5 minutes
+AutoImport: -1                    # Disable auto-import (read-only)
+
+# File handling
+OriginalsPath: "/photoprism/originals"
+OriginalsLimit: -1                # No limit on number of files
+ResolutionLimit: -1               # No resolution limit
+
+# Only index JPG files
+IncludeExtensions: [".jpg", ".jpeg", ".JPG", ".JPEG"]
+ExcludeExtensions: [".png", ".gif", ".bmp", ".tiff", ".raw", ".arw", ".cr2", ".nef", ".orf", ".rw2"]
+
+# Skip hidden files and directories
+SkipHidden: true
+IgnorePatterns: ["*/.DS_Store", "*/Thumbs.db", "*/.thumbnails/*", "*/@eaDir/*"]
+
+# Quality settings
+JpegQuality: 95                   # High quality for thumbnails
+ThumbFilter: lanczos              # Best quality resizing
+ThumbUncached: false              # Cache thumbnails for performance
+ThumbSizeUncached: 7680           # Max uncached size
+ThumbSize: 2048                   # Default thumbnail size
+ThumbSizePrecached: 224           # Precache small thumbnails
+
+# Performance
+HttpCompression: gzip
+HttpConcurrency: 16
+HttpCacheMaxAge: 3600
+
+# Storage paths
+StoragePath: "/photoprism/storage"
+CachePath: "/photoprism/storage/cache"
+TempPath: "/photoprism/storage/temp"
+BackupPath: "/photoprism/storage/backup"
+AssetsPath: "/photoprism/assets"
+
+# Database
+DatabaseDriver: mysql
+DatabaseDsn: ${PHOTOPRISM_DATABASE_DSN}
+
+# Logging
+LogLevel: info
+Debug: false
+Trace: false
+
+# Security
+DownloadToken: ${PHOTOPRISM_DOWNLOAD_TOKEN}
+PreviewToken: ${PHOTOPRISM_PREVIEW_TOKEN}
+
+# Workers and resources
+Workers: 4                        # Number of workers for indexing
+WakeupInterval: 900              # Check for work every 15 minutes
+
+# Sidecar options (metadata files)
+SidecarPath: "/photoprism/storage/sidecar"
+SidecarJson: true                # Create JSON sidecar files
+SidecarYaml: false               # Skip YAML sidecar files
+
+# Disable features not needed for JPG-only galleries
+DisableDarktable: true           # No RAW processing needed
+DisableHeifConvert: true         # No HEIF conversion needed
+DisableSips: true                # No Apple SIPS needed
+RawPresets: false                # No RAW presets needed

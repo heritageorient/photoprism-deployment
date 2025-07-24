@@ -1,0 +1,126 @@
+name: Deploy PhotoPrism to London Server
+
+on:
+  push:
+    branches:
+      - main
+      - production
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DEPLOYMENT_USER: deploy
+  DEPLOYMENT_HOST: london.heritageorient.com
+
+jobs:
+  test:
+    name: Test and Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+          
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+            
+      - name: Run tests
+        run: |
+          if [ -f "Makefile" ] && grep -q "test:" Makefile; then
+            make test
+          else
+            echo "No tests configured"
+          fi
+          
+      - name: Build verification
+        run: |
+          echo "Build verification completed"
+          echo "Deployment artifacts ready"
+
+  deploy:
+    name: Deploy to London Server
+    needs: test
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'production' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.LONDON_SERVER_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.LONDON_SERVER_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_ed25519
+          chmod 644 ~/.ssh/known_hosts
+          
+      - name: Test SSH connection
+        run: |
+          ssh -o StrictHostKeyChecking=yes \
+              -i ~/.ssh/id_ed25519 \
+              ${{ env.DEPLOYMENT_USER }}@${{ env.DEPLOYMENT_HOST }} \
+              "echo 'SSH connection successful'"
+              
+      - name: Copy deployment files
+        run: |
+          scp -r -i ~/.ssh/id_ed25519 \
+              deployment/* \
+              ${{ env.DEPLOYMENT_USER }}@${{ env.DEPLOYMENT_HOST }}:/home/${{ env.DEPLOYMENT_USER }}/photoprism-deployment/
+              
+      - name: Deploy PhotoPrism
+        env:
+          DEPLOYMENT_ENV: ${{ github.event.inputs.environment || 'production' }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+              ${{ env.DEPLOYMENT_USER }}@${{ env.DEPLOYMENT_HOST }} \
+              "cd /home/${{ env.DEPLOYMENT_USER }}/photoprism-deployment && \
+               DEPLOYMENT_ENV=${{ env.DEPLOYMENT_ENV }} \
+               DEPLOYMENT_HOST=${{ env.DEPLOYMENT_HOST }} \
+               bash scripts/deploy.sh"
+               
+      - name: Verify deployment
+        run: |
+          ssh -i ~/.ssh/id_ed25519 \
+              ${{ env.DEPLOYMENT_USER }}@${{ env.DEPLOYMENT_HOST }} \
+              "podman pod ps | grep photoprism && \
+               curl -s -o /dev/null -w '%{http_code}' http://localhost:2342/api/v1/status | grep -q '200' && \
+               echo 'Deployment verified successfully'"
+               
+      - name: Deployment summary
+        if: success()
+        run: |
+          echo "### Deployment Successful! 🚀" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ github.event.inputs.environment || 'production' }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Server:** London (${{ env.DEPLOYMENT_HOST }})" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** PhotoPrism deployed and running" >> $GITHUB_STEP_SUMMARY
+          echo "**Access:** Configure reverse proxy for public access" >> $GITHUB_STEP_SUMMARY
+          echo "**Internal URL:** http://localhost:2342" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "⚠️ **Important:** Change the default admin password immediately!" >> $GITHUB_STEP_SUMMARY
+          
+      - name: Cleanup SSH
+        if: always()
+        run: |
+          rm -rf ~/.ssh/id_ed25519

@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: photoprism
+  labels:
+    app: photoprism
+spec:
+  containers:
+  - name: photoprism
+    image: photoprism/photoprism:latest
+    ports:
+    - containerPort: 2342
+      hostPort: 2342
+    env:
+    - name: PHOTOPRISM_ADMIN_USER
+      value: "admin"
+    - name: PHOTOPRISM_ADMIN_PASSWORD
+      value: "insecure"
+    - name: PHOTOPRISM_AUTH_MODE
+      value: "password"
+    - name: PHOTOPRISM_SITE_URL
+      value: "http://localhost:2342/"
+    - name: PHOTOPRISM_ORIGINALS_LIMIT
+      value: "5000"
+    - name: PHOTOPRISM_HTTP_COMPRESSION
+      value: "gzip"
+    - name: PHOTOPRISM_DEBUG
+      value: "false"
+    - name: PHOTOPRISM_PUBLIC
+      value: "false"
+    - name: PHOTOPRISM_READONLY
+      value: "true"
+    - name: PHOTOPRISM_EXPERIMENTAL
+      value: "false"
+    - name: PHOTOPRISM_DISABLE_CHOWN
+      value: "true"
+    - name: PHOTOPRISM_DISABLE_WEBDAV
+      value: "false"
+    - name: PHOTOPRISM_DISABLE_SETTINGS
+      value: "false"
+    - name: PHOTOPRISM_DISABLE_TENSORFLOW
+      value: "false"
+    - name: PHOTOPRISM_DISABLE_FACES
+      value: "false"
+    - name: PHOTOPRISM_DISABLE_CLASSIFICATION
+      value: "false"
+    - name: PHOTOPRISM_DISABLE_RAW
+      value: "false"
+    - name: PHOTOPRISM_RAW_PRESETS
+      value: "false"
+    - name: PHOTOPRISM_JPEG_QUALITY
+      value: "85"
+    - name: PHOTOPRISM_DETECT_NSFW
+      value: "false"
+    - name: PHOTOPRISM_UPLOAD_NSFW
+      value: "true"
+    - name: PHOTOPRISM_DATABASE_DRIVER
+      value: "sqlite"
+    - name: PHOTOPRISM_SITE_CAPTION
+      value: "Heritage Orient PhotoPrism"
+    - name: PHOTOPRISM_SITE_DESCRIPTION
+      value: "Heritage Orient Photo Gallery"
+    - name: PHOTOPRISM_SITE_AUTHOR
+      value: "Heritage Orient"
+    volumeMounts:
+    - name: storage
+      mountPath: /photoprism/storage
+    - name: originals-orico
+      mountPath: /photoprism/originals/orico
+      readOnly: true
+    - name: originals-gdrive
+      mountPath: /photoprism/originals/gdrive
+      readOnly: true
+  volumes:
+  - name: storage
+    hostPath:
+      path: /var/lib/photoprism/storage
+      type: DirectoryOrCreate
+  - name: originals-orico
+    hostPath:
+      path: /mnt/pearl-nas/orico
+      type: Directory
+  - name: originals-gdrive
+    hostPath:
+      path: /mnt/pearl-nas/gdrive
+      type: Directory
