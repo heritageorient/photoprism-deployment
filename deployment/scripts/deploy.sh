@@ -92,8 +92,8 @@ podman play kube deployment/podman/photoprism-pod.yaml
 if verify_deployment; then
     echo "Deployment successful!"
     echo "PhotoPrism is accessible at: http://${DEPLOYMENT_HOST}:2342"
-    echo "Default credentials: admin / insecure"
-    echo "IMPORTANT: Change the admin password immediately after first login!"
+    echo "Default credentials: admin / (secure password)"
+    echo "Admin password has been securely configured"
     
     # Log deployment metadata
     echo "Deployment metadata:"

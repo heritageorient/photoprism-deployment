@@ -15,7 +15,7 @@ spec:
     - name: PHOTOPRISM_ADMIN_USER
       value: "admin"
     - name: PHOTOPRISM_ADMIN_PASSWORD
-      value: "insecure"
+      value: "kwE1#WQHF7amy5AkQg$u4APYxbVZKIoR"
     - name: PHOTOPRISM_AUTH_MODE
       value: "password"
     - name: PHOTOPRISM_SITE_URL
